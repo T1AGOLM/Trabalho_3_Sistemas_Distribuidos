@@ -74,10 +74,13 @@ def probe(path: Path) -> dict:
 
 def normalize(src: Path, dst: Path) -> None:
     """Normalização de volume com loudnorm (EBU R128, duas etapas simplificada)."""
+    # libopus (usado em .opus e .webm) só aceita 8/12/16/24/48 kHz — forçar
+    # 44100 Hz faz o encoder falhar; os demais formatos ficam em 44100 Hz.
+    ar = "48000" if dst.suffix.lower() in {".opus", ".webm"} else "44100"
     _run([
         FFMPEG, "-y", "-i", str(src),
         "-af", "loudnorm=I=-16:LRA=11:TP=-1.5",
-        "-ar", "44100", str(dst),
+        "-ar", ar, str(dst),
     ])
 
 

@@ -181,9 +181,9 @@ def _open_with_system_player(path: Path) -> None:
 # ───────────────────────────────────────────────────────────── main window ──
 
 class MainWindow(QMainWindow):
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, timeout: float = 120.0):
         super().__init__()
-        self.api = AudioApi(base_url)
+        self.api = AudioApi(base_url, timeout=timeout)
         self.history: list[dict] = []
         self.selected: dict | None = None
         self._pixmap_original: QPixmap | None = None

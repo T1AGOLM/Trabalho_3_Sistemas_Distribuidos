@@ -33,7 +33,41 @@ class AudioApi:
     # ------------------------------------------------------------- helpers
 
     def _client(self) -> httpx.Client:
-        return httpx.Client(base_url=self.base_url, timeout=self.timeout)
+        # Timeouts granulares: conexão falha rápido (rede/host errado),
+        # upload (write) e processamento (read) têm limites próprios.
+        t = httpx.Timeout(
+            self.timeout,          # default (read)
+            connect=10.0,          # servidor inacessível falha em ~10s
+            write=self.timeout,    # tempo para ENVIAR o arquivo
+            read=self.timeout * 2, # tempo para o servidor PROCESSAR e responder
+            pool=10.0,
+        )
+        return httpx.Client(base_url=self.base_url, timeout=t)
+
+    def _friendly_error(self, e: Exception, action: str) -> str:
+        """Traduz erros de rede para mensagens com dicas acionáveis."""
+        if isinstance(e, httpx.ConnectTimeout):
+            return (f"{action}: tempo esgotado ao conectar em {self.base_url}.\n"
+                    "Possíveis causas:\n"
+                    "  • servidor não está rodando (uvicorn server.main:app --host 0.0.0.0 --port 8000)\n"
+                    "  • IP/porta errados na opção --server\n"
+                    "  • firewall bloqueando a porta 8000 no servidor\n"
+                    "  • Wi-Fi com 'ap isolamento de cliente' (máquinas não se enxergam)")
+        if isinstance(e, httpx.ConnectError):
+            return (f"{action}: não foi possível conectar ao servidor {self.base_url}.\n"
+                    "Verifique se o servidor está rodando e acessível (teste "
+                    f"http://<ip-do-servidor>:8000/health no navegador).\nDetalhe: {e}")
+        if isinstance(e, httpx.WriteTimeout):
+            return (f"{action}: a conexão caiu durante o envio do arquivo (rede lenta/instável).\n"
+                    f"Aumente o timeout:  python -m client.main --timeout 300\nDetalhe: {e}")
+        if isinstance(e, httpx.ReadTimeout):
+            return (f"{action}: o servidor recebeu o arquivo mas demorou demais para responder.\n"
+                    "Áudios longos levam mais tempo para processar — aumente o limite:\n"
+                    f"  python -m client.main --timeout 300\nDetalhe: {e}")
+        if isinstance(e, httpx.TimeoutException):
+            return (f"{action}: tempo esgotado ({self.timeout:g}s). "
+                    f"Tente --timeout 300 se o arquivo for grande ou a rede lenta.\nDetalhe: {e}")
+        return f"{action}: {e}"
 
     @staticmethod
     def _raise(resp: httpx.Response, action: str) -> None:
@@ -50,7 +84,7 @@ class AudioApi:
         try:
             r = self._client().get("/health")
         except httpx.HTTPError as e:
-            raise ApiError(f"Servidor inacessível em {self.base_url}: {e}") from e
+            raise ApiError(self._friendly_error(e, "Servidor inacessível")) from e
         self._raise(r, "health")
         return r.json()
 
@@ -58,7 +92,7 @@ class AudioApi:
         try:
             r = self._client().get("/api/audios")
         except httpx.HTTPError as e:
-            raise ApiError(f"Falha ao listar: {e}") from e
+            raise ApiError(self._friendly_error(e, "Falha ao listar")) from e
         self._raise(r, "list")
         return r.json()
 
@@ -85,7 +119,7 @@ class AudioApi:
                         files={"file": (p.name, f, mime)},
                     )
         except httpx.HTTPError as e:
-            raise ApiError(f"Falha no envio: {e}") from e
+            raise ApiError(self._friendly_error(e, "Falha no envio")) from e
         self._raise(r, "upload")
         return r.json()
 
@@ -93,7 +127,7 @@ class AudioApi:
         try:
             r = self._client().delete(f"/api/audios/{audio_id}")
         except httpx.HTTPError as e:
-            raise ApiError(f"Falha ao excluir: {e}") from e
+            raise ApiError(self._friendly_error(e, "Falha ao excluir")) from e
         self._raise(r, "delete")
         return r.json()
 
@@ -115,6 +149,6 @@ class AudioApi:
         try:
             r = self._client().get(url)
         except httpx.HTTPError as e:
-            raise ApiError(f"Falha ao baixar {url}: {e}") from e
+            raise ApiError(self._friendly_error(e, "Falha ao baixar")) from e
         self._raise(r, "download")
         return r.content

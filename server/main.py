@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import socket
 import uuid as uuid_lib
 from pathlib import Path
 
@@ -29,7 +30,28 @@ from .storage import resolve_rel
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    # Ajuda a configurar o cliente em outra máquina (requisito do trabalho)
+    for ip in _lan_ips():
+        print(f"[servidor] rede local: http://{ip}:{settings.PORT}  "
+              f"→ cliente: python -m client.main --server http://{ip}:{settings.PORT}")
     yield
+
+
+def _lan_ips() -> list[str]:
+    """IPs da máquina acessíveis na rede local (p/ exibir no startup)."""
+    ips = ["127.0.0.1"]
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))  # não envia pacotes; só resolve a rota
+            ip = s.getsockname()[0]
+            if ip not in ips:
+                ips.insert(0, ip)
+        finally:
+            s.close()
+    except Exception:
+        pass
+    return ips
 
 
 app = FastAPI(
@@ -81,14 +103,16 @@ async def upload_audio(
     size_bytes = 0
     try:
         # 1) recebe o upload em disco (streaming)
+        max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
         with open(tmp, "wb") as f:
             while chunk := await file.read(1 << 20):
                 size_bytes += len(chunk)
+                if size_bytes > max_bytes:
+                    # aborta CEDO — responde 413 sem receber o arquivo inteiro
+                    raise HTTPException(413, f"Arquivo maior que {settings.MAX_UPLOAD_MB} MB.")
                 f.write(chunk)
         if size_bytes == 0:
             raise HTTPException(400, "Arquivo vazio.")
-        if size_bytes > settings.MAX_UPLOAD_MB * 1024 * 1024:
-            raise HTTPException(413, f"Arquivo maior que {settings.MAX_UPLOAD_MB} MB.")
 
         # 2) metadados do original (ffprobe) — em thread, pois é subprocess
         info = await run_in_threadpool(ffmpeg_ops.probe, tmp)

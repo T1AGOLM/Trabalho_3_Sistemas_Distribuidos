@@ -144,6 +144,25 @@ uvicorn server.main:app --host 0.0.0.0 --port 8000
 - **Interface web:** http://localhost:8000/
 - **Documentação interativa (Swagger):** http://localhost:8000/docs
 
+> ⚠️ **Importante para acesso de outras máquinas:** use `--host 0.0.0.0` (e não
+> `127.0.0.1`/`localhost`). No startup o servidor imprime o endereço da rede
+> local, ex.: `[servidor] rede local: http://192.168.0.42:8000`.
+
+### Liberar a porta 8000 no firewall do servidor
+
+Se o cliente não conecta, libere a porta no firewall da máquina do **servidor**:
+
+```bash
+# Ubuntu/Debian (ufw)
+sudo ufw allow 8000/tcp
+
+# Fedora/RHEL (firewalld)
+sudo firewall-cmd --add-port=8000/tcp --permanent && sudo firewall-cmd --reload
+
+# Windows (PowerShell como administrador)
+netsh advfirewall firewall add rule name="AudioLayers 8000" dir=in action=allow protocol=TCP localport=8000
+```
+
 ## ▶️ Execução do cliente
 
 Em **outra máquina** (ou na mesma), apontando para o IP do servidor:
@@ -153,6 +172,55 @@ source .venv/bin/activate
 python -m client.main --server http://192.168.0.42:8000   # IP do servidor
 # sem --server, conecta em http://127.0.0.1:8000
 ```
+
+Opções do cliente:
+
+| Opção        | Descrição                                        | Padrão                |
+|--------------|--------------------------------------------------|-----------------------|
+| `--server`   | URL do servidor                                  | `http://127.0.0.1:8000` |
+| `--timeout`  | Timeout de rede em segundos (upload/processamento) | `120`               |
+
+---
+
+## 🌐 Demonstração com duas máquinas (cliente e servidor)
+
+O trabalho exige **dois computadores distintos**. Passo a passo:
+
+1. **Máquina A (servidor):** suba o banco e o servidor:
+   ```bash
+   docker compose up -d
+   uvicorn server.main:app --host 0.0.0.0 --port 8000
+   ```
+   Anote o endereço impresso no startup (ex.: `http://192.168.0.42:8000`) e
+   confirme que a porta 8000 está liberada no firewall.
+
+2. **Teste rápido:** na **Máquina B**, abra no navegador
+   `http://192.168.0.42:8000/health` — deve responder `{"status":"ok",...}`.
+   Se não abrir, veja *Solução de problemas* abaixo antes de usar o cliente.
+
+3. **Máquina B (cliente):** instale as dependências (`pip install -r requirements.txt`)
+   e execute:
+   ```bash
+   python -m client.main --server http://192.168.0.42:8000
+   ```
+
+4. Siga o fluxo de demonstração da seção seguinte (enviar, processar,
+   reproduzir, histórico, banco, organização de arquivos, interface web).
+
+### Solução de problemas — timeout ao enviar
+
+O cliente mostra mensagens detalhadas indicando a causa provável. As mais comuns:
+
+| Sintoma | Causa provável | Solução |
+|---------|----------------|---------|
+| *"tempo esgotado ao conectar"* | servidor fora do ar, IP errado, firewall ou Wi-Fi com isolamento de clientes | verifique `/health` no navegador; libere a porta 8000; conecte as duas máquinas em outro Wi-Fi/hotspot celular |
+| *"conexão caiu durante o envio"* | rede lenta/instável com arquivo grande | aumente o timeout: `python -m client.main --timeout 300` |
+| *"recebeu o arquivo mas demorou para responder"* | processamento FFmpeg de áudio longo | aumente o timeout: `--timeout 300` |
+| conecta na mesma máquina, mas não de outra | servidor rodando em `127.0.0.1` | use `--host 0.0.0.0` no uvicorn |
+| Wi-Fi da universidade | **ap/client isolation** bloqueia tráfego entre máquinas | use hotspot do celular ou um roteador próprio |
+
+Dica de rede: teste a conectividade básica antes da demo
+`ping <ip-do-servidor>` e `curl http://<ip-do-servidor>:8000/health`.
 
 ---
 

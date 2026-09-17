@@ -41,6 +41,10 @@ def _try_connect(url: str, *, timeout_s: float = 4.0) -> bool:
 
 def _resolve_database_url() -> tuple[str, str]:
     """Retorna (url_em_uso, tipo). Faz fallback p/ SQLite se o PostgreSQL falhar."""
+    # URL já é SQLite → conecta sempre; não passa pelo try do PostgreSQL
+    if _is_sqlite(settings.DATABASE_URL):
+        DB_FALLBACK_SQLITE.parent.mkdir(parents=True, exist_ok=True)
+        return settings.DATABASE_URL, "sqlite"
     if _try_connect(settings.DATABASE_URL):
         return settings.DATABASE_URL, "postgresql"
     print(f"[db] PostgreSQL indisponível — usando fallback SQLite em {DB_FALLBACK_SQLITE}")
