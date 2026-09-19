@@ -1,0 +1,23 @@
+{
+  "id": "07e7890b-e5f8-4f8b-a818-36623d160e19",
+  "original_name": "sigmamusicart-football-football-music-551346.mp3",
+  "checksum_sha256": "6d726554fe438d8b30955b8fd431015aa5564ccc1a9c391e8a5ae31a4fdc075c",
+  "processing_type": "convert",
+  "processing_params": {
+    "target_ext": "m4a"
+  },
+  "size_bytes_original": 1891584,
+  "size_bytes_processed": 965741,
+  "duration_sec": 59.112,
+  "sample_rate": 48000,
+  "channels": 2,
+  "bitrate": 256000,
+  "processed": {
+    "duration_sec": 59.112,
+    "sample_rate": 48000,
+    "channels": 2,
+    "bitrate": 130699,
+    "codec": "aac"
+  },
+  "waveform": "2026/09/18/07e7890b-e5f8-4f8b-a818-36623d160e19/waveform.png"
+}

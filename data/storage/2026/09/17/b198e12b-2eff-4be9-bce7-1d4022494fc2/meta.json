@@ -1,0 +1,23 @@
+{
+  "id": "b198e12b-2eff-4be9-bce7-1d4022494fc2",
+  "original_name": "Hollow Knight Silksong's bell theme Very The Shining (Classic 4 notes from Dies Irae) - Sniper Diplomat (youtube).mp3",
+  "checksum_sha256": "2aa569317bc422acc9318e65b3429907cb0f06926bf43a169972a5ed2870d259",
+  "processing_type": "speed",
+  "processing_params": {
+    "rate": 2.0
+  },
+  "size_bytes_original": 754416,
+  "size_bytes_processed": 151553,
+  "duration_sec": 18.8604,
+  "sample_rate": 44100,
+  "channels": 2,
+  "bitrate": 320000,
+  "processed": {
+    "duration_sec": 9.409887,
+    "sample_rate": 44100,
+    "channels": 2,
+    "bitrate": 128845,
+    "codec": "mp3"
+  },
+  "waveform": "2026/09/17/b198e12b-2eff-4be9-bce7-1d4022494fc2/waveform.png"
+}

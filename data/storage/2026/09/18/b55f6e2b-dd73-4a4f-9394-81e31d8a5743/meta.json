@@ -1,0 +1,23 @@
+{
+  "id": "b55f6e2b-dd73-4a4f-9394-81e31d8a5743",
+  "original_name": "arunangshubanerjee-live-football-match-stadium-crowd-cheering-563439.mp3",
+  "checksum_sha256": "bc3612ee2c55126cc01acfd075ab3eb058eecb492c15dea1dccd574c3e0ba25f",
+  "processing_type": "speed",
+  "processing_params": {
+    "rate": 2.0
+  },
+  "size_bytes_original": 559872,
+  "size_bytes_processed": 140780,
+  "duration_sec": 17.496,
+  "sample_rate": 48000,
+  "channels": 2,
+  "bitrate": 256000,
+  "processed": {
+    "duration_sec": 8.755313,
+    "sample_rate": 48000,
+    "channels": 2,
+    "bitrate": 128635,
+    "codec": "mp3"
+  },
+  "waveform": "2026/09/18/b55f6e2b-dd73-4a4f-9394-81e31d8a5743/waveform.png"
+}

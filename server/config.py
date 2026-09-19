@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     # Banco de dados (PostgreSQL por padrão; SQLite como fallback)
     DATABASE_URL: str = "postgresql+psycopg://audio_user:audio_pass@localhost:5432/audio_db"
 
-    # Servidor
-    HOST: str = "0.0.0.0"
+    # Servidor — '::' = escuta IPv6 e IPv4 (socket dual-stack criado em __main__.py)
+    HOST: str = "::"
     PORT: int = 8000
 
     # Armazenamento em disco
