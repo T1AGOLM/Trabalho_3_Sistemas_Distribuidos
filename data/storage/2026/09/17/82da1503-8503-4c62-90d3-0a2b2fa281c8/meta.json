@@ -1,0 +1,23 @@
+{
+  "id": "82da1503-8503-4c62-90d3-0a2b2fa281c8",
+  "original_name": "uwufufu-animation.webm",
+  "checksum_sha256": "8166d1a1fcc6ebdf3cb380cdc26a8fe448a3ea7713485940290cc58228d7b6d3",
+  "processing_type": "speed",
+  "processing_params": {
+    "rate": 2.0
+  },
+  "size_bytes_original": 552533,
+  "size_bytes_processed": 204358,
+  "duration_sec": 4.26571,
+  "sample_rate": null,
+  "channels": null,
+  "bitrate": 1036231,
+  "processed": {
+    "duration_sec": 4.266,
+    "sample_rate": null,
+    "channels": null,
+    "bitrate": 383231,
+    "codec": null
+  },
+  "waveform": null
+}

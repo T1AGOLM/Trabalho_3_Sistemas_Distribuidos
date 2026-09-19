@@ -30,28 +30,78 @@ from .storage import resolve_rel
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
-    # Ajuda a configurar o cliente em outra máquina (requisito do trabalho)
-    for ip in _lan_ips():
-        print(f"[servidor] rede local: http://{ip}:{settings.PORT}  "
-              f"→ cliente: python -m client.main --server http://{ip}:{settings.PORT}")
+    # Ajuda a configurar o cliente em outra máquina (requisito do trabalho).
+    # O nome mDNS (hostname.local) independe da rede/IP — é o endereço que o
+    # cliente deve usar, junto com a URL literal IPv6 como alternativa.
+    port = settings.PORT
+    mdns, v6, v4 = _lan_addresses()
+    print(f"[servidor] escutando em :: + 0.0.0.0 (IPv6 e IPv4), porta {port}")
+    print(f"[servidor] nesta máquina:  http://localhost:{port}")
+    if mdns:
+        print(f"[servidor] nome mDNS:     http://{mdns}:{port}"
+              f"   ← endereço fixo para o cliente (não muda com a rede)")
+        print(f"[servidor] cliente:        python -m client.main --server \"http://{mdns}:{port}\"")
+    for a in v6:
+        print(f"[servidor] IPv6:           http://[{a}]:{port}")
+    for a in v4:
+        print(f"[servidor] IPv4:           http://{a}:{port}")
     yield
 
 
-def _lan_ips() -> list[str]:
-    """IPs da máquina acessíveis na rede local (p/ exibir no startup)."""
-    ips = ["127.0.0.1"]
+def _lan_addresses() -> tuple[str | None, list[str], list[str]]:
+    """Nome mDNS (hostname.local), endereços IPv6 e IPv4 do host (best-effort).
+
+    - IPv6 link-local (fe80::) precisa de zona; em Linux pega a interface
+      (/proc/net/if_inet6) e imprime já no formato de URL ('%25iface').
+    """
+    host = socket.gethostname().strip().lower().replace(" ", "-").strip(".")
+    mdns = f"{host}.local" if host else None
+
+    v6: list[str] = []
+    seen: set[str] = set()
+
+    def add_v6(addr: str, zone: str | None = None) -> None:
+        if addr.lower().startswith("fe80:") and zone:
+            addr = f"{addr}%25{zone}"  # '%' escapado para uso direto em URL
+        if addr not in seen:
+            seen.add(addr)
+            v6.append(addr)
+
+    proc_inet6 = Path("/proc/net/if_inet6")  # Linux
+    if proc_inet6.exists():
+        try:
+            for line in proc_inet6.read_text().splitlines():
+                parts = line.split()
+                if len(parts) != 6:
+                    continue
+                raw, _, _, scope, _, iface = parts
+                if scope == "10":  # 0x10 = host-local (::1) — não útil na rede
+                    continue
+                addr = ":".join(raw[i:i + 4] for i in range(0, 32, 4))
+                # 0x20 = link-local (exige zona); 0x00/0x40 = global/site (sem zona)
+                add_v6(addr, iface if scope == "20" else None)
+        except Exception:
+            pass
+    else:  # macOS/Windows: best-effort sem zona (veja README para a zona)
+        try:
+            infos = socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET6)
+            for info in infos:
+                add_v6(info[4][0].split("%")[0])
+        except Exception:
+            pass
+
+    v4: list[str] = []
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.connect(("8.8.8.8", 80))  # não envia pacotes; só resolve a rota
-            ip = s.getsockname()[0]
-            if ip not in ips:
-                ips.insert(0, ip)
+            v4.append(s.getsockname()[0])
         finally:
             s.close()
     except Exception:
         pass
-    return ips
+
+    return mdns, v6, v4
 
 
 app = FastAPI(

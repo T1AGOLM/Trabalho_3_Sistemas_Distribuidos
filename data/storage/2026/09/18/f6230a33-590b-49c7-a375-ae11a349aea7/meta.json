@@ -1,0 +1,23 @@
+{
+  "id": "f6230a33-590b-49c7-a375-ae11a349aea7",
+  "original_name": "alexguz-funk-amp-breakbeat-upbeat-advertising-happy-cook-541097.mp3",
+  "checksum_sha256": "de26e9ce6782f093dbfe45c4f353aeb9baa852e0cf81a5380dc2e0828a41657b",
+  "processing_type": "speed",
+  "processing_params": {
+    "rate": 1.25
+  },
+  "size_bytes_original": 3994853,
+  "size_bytes_processed": 1598945,
+  "duration_sec": 124.839156,
+  "sample_rate": 44100,
+  "channels": 2,
+  "bitrate": 256000,
+  "processed": {
+    "duration_sec": 99.882834,
+    "sample_rate": 44100,
+    "channels": 2,
+    "bitrate": 128065,
+    "codec": "mp3"
+  },
+  "waveform": "2026/09/18/f6230a33-590b-49c7-a375-ae11a349aea7/waveform.png"
+}
